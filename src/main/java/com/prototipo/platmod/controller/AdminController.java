@@ -33,6 +33,13 @@ public class AdminController {
     private DocenteRepository docenteRepository;
 
     // --- GESTION DE PLANES ---
+
+    // NUEVO: CREAR PLAN
+    @PostMapping("/planes")
+    public ResponseEntity<PlanSuscripcion> crearPlan(@RequestBody PlanSuscripcion plan) {
+        return ResponseEntity.ok(planService.crear(plan));
+    }
+
     @PutMapping("/planes/{id}")
     public ResponseEntity<PlanSuscripcion> actualizarPlan(@PathVariable Long id,
             @RequestBody PlanSuscripcion planDetalles) {
