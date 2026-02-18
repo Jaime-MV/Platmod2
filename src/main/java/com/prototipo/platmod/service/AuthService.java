@@ -17,8 +17,10 @@ public class AuthService {
     private final JwtService jwtService; // 1. INYECTAMOS EL SERVICIO DE TOKEN
 
     public AuthResponse login(LoginRequest request) {
-        // 1. Buscar usuario por correo
-        Usuario usuario = usuarioRepository.findByCorreo(request.getCorreo())
+        // 1. Buscar usuario por correo (Normalizado)
+        String correoNormalizado = request.getCorreo().toLowerCase().trim();
+
+        Usuario usuario = usuarioRepository.findByCorreo(correoNormalizado)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado o credenciales invalidas"));
 
         // 2. Verificar contrasena (comparar texto plano vs hash en DB)
@@ -40,7 +42,7 @@ public class AuthService {
                 .nombre(usuario.getNombre())
                 .correo(usuario.getCorreo())
                 .rol(usuario.getRol()) // Asegurate que tu DTO acepte el Enum, si no usa .toString()
-                .token(jwtToken) //3. REEMPLAZAMOS EL TEXTO DE PRUEBA POR EL TOKEN REAL
+                .token(jwtToken) // 3. REEMPLAZAMOS EL TEXTO DE PRUEBA POR EL TOKEN REAL
                 .mensaje("Login exitoso")
                 .build();
     }
