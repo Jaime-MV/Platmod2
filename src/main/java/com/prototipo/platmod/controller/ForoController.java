@@ -2,13 +2,8 @@ package com.prototipo.platmod.controller;
 
 import com.prototipo.platmod.dto.ForoPreguntaDTO;
 import com.prototipo.platmod.dto.ForoRespuestaDTO;
-import com.prototipo.platmod.entity.ForoFavorito;
-import com.prototipo.platmod.entity.ForoPregunta;
-import com.prototipo.platmod.entity.ForoRespuesta;
-import com.prototipo.platmod.entity.Usuario;
-import com.prototipo.platmod.repository.ForoFavoritoRepository;
-import com.prototipo.platmod.repository.ForoRespuestaRepository;
-import com.prototipo.platmod.repository.UsuarioRepository;
+import com.prototipo.platmod.entity.*;
+import com.prototipo.platmod.repository.*;
 import com.prototipo.platmod.service.ForoPreguntaService;
 import com.prototipo.platmod.service.ForoRespuestaService;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +12,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -32,6 +28,8 @@ public class ForoController {
     private final ForoRespuestaService foroRespuestaService;
     private final ForoRespuestaRepository foroRespuestaRepository;
     private final ForoFavoritoRepository foroFavoritoRepository;
+    private final ForoPreguntaLikeRepository foroPreguntaLikeRepository;
+    private final ForoRespuestaLikeRepository foroRespuestaLikeRepository;
     private final UsuarioRepository usuarioRepository;
 
     // ============ PREGUNTAS ============
@@ -42,6 +40,8 @@ public class ForoController {
         List<ForoPregunta> preguntas = foroPreguntaService.obtenerTodas();
         List<ForoPreguntaDTO> dtos = preguntas.stream()
                 .map(p -> convertirPreguntaADTO(p, idUsuario))
+                .sorted(Comparator.comparingLong(ForoPreguntaDTO::getTotalLikes).reversed()
+                        .thenComparing(Comparator.comparing(ForoPreguntaDTO::getFechaCreacion).reversed()))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
     }
@@ -77,7 +77,6 @@ public class ForoController {
         Usuario usuario = getUsuario(authentication);
         ForoPregunta pregunta = foroPreguntaService.obtenerPorId(id);
 
-        // Only the owner can delete their question
         if (!pregunta.getUsuario().getIdUsuario().equals(usuario.getIdUsuario())) {
             return ResponseEntity.status(403)
                     .body(Map.of("error", "No puedes eliminar una pregunta que no es tuya"));
@@ -134,13 +133,79 @@ public class ForoController {
         }
     }
 
+    // ============ LIKES PREGUNTAS ============
+
+    @PostMapping("/preguntas/{id}/like")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> toggleLikePregunta(
+            @PathVariable Long id,
+            Authentication authentication) {
+
+        Usuario usuario = getUsuario(authentication);
+        ForoPregunta pregunta = foroPreguntaService.obtenerPorId(id);
+
+        Optional<ForoPreguntaLike> existente = foroPreguntaLikeRepository.findByUsuarioAndPregunta(usuario, pregunta);
+
+        boolean liked;
+        if (existente.isPresent()) {
+            foroPreguntaLikeRepository.delete(existente.get());
+            liked = false;
+        } else {
+            ForoPreguntaLike like = new ForoPreguntaLike();
+            like.setUsuario(usuario);
+            like.setPregunta(pregunta);
+            foroPreguntaLikeRepository.save(like);
+            liked = true;
+        }
+
+        long totalLikes = foroPreguntaLikeRepository.countByPregunta_IdPregunta(id);
+        return ResponseEntity.ok(Map.of("liked", liked, "totalLikes", totalLikes));
+    }
+
+    // ============ LIKES RESPUESTAS ============
+
+    @PostMapping("/respuestas/{id}/like")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> toggleLikeRespuesta(
+            @PathVariable Long id,
+            Authentication authentication) {
+
+        Usuario usuario = getUsuario(authentication);
+        ForoRespuesta respuesta = foroRespuestaService.obtenerPorId(id);
+
+        Optional<ForoRespuestaLike> existente = foroRespuestaLikeRepository.findByUsuarioAndRespuesta(usuario,
+                respuesta);
+
+        boolean liked;
+        if (existente.isPresent()) {
+            foroRespuestaLikeRepository.delete(existente.get());
+            liked = false;
+        } else {
+            ForoRespuestaLike like = new ForoRespuestaLike();
+            like.setUsuario(usuario);
+            like.setRespuesta(respuesta);
+            foroRespuestaLikeRepository.save(like);
+            liked = true;
+        }
+
+        long totalLikes = foroRespuestaLikeRepository.countByRespuesta_IdRespuesta(id);
+        return ResponseEntity.ok(Map.of("liked", liked, "totalLikes", totalLikes));
+    }
+
     // ============ RESPUESTAS ============
 
     @GetMapping("/preguntas/{id}/respuestas")
-    public ResponseEntity<List<ForoRespuestaDTO>> listarRespuestas(@PathVariable Long id) {
+    public ResponseEntity<List<ForoRespuestaDTO>> listarRespuestas(
+            @PathVariable Long id,
+            Authentication authentication) {
+        Long idUsuario = getUsuarioId(authentication);
         List<ForoRespuesta> respuestas = foroRespuestaService.obtenerPorPreguntaId(id);
         List<ForoRespuestaDTO> dtos = respuestas.stream()
-                .map(this::convertirRespuestaADTO)
+                .map(r -> convertirRespuestaADTO(r, idUsuario))
+                // Sort: docentes first, then by likes descending
+                .sorted(Comparator
+                        .comparing((ForoRespuestaDTO r) -> !"DOCENTE".equals(r.getRolUsuario()))
+                        .thenComparing(Comparator.comparingLong(ForoRespuestaDTO::getTotalLikes).reversed()))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
     }
@@ -162,7 +227,7 @@ public class ForoController {
         respuesta.setArchivoNombre(body.getOrDefault("archivoNombre", null));
 
         ForoRespuesta creada = foroRespuestaService.crear(respuesta);
-        return ResponseEntity.ok(convertirRespuestaADTO(creada));
+        return ResponseEntity.ok(convertirRespuestaADTO(creada, usuario.getIdUsuario()));
     }
 
     @PutMapping("/respuestas/{id}/verificar")
@@ -178,7 +243,7 @@ public class ForoController {
 
         if (!respuesta.getUsuario().getIdUsuario().equals(usuario.getIdUsuario())) {
             return ResponseEntity.status(403)
-                    .body(java.util.Map.of("error", "No puedes eliminar una respuesta que no es tuya"));
+                    .body(Map.of("error", "No puedes eliminar una respuesta que no es tuya"));
         }
 
         foroRespuestaService.eliminar(id);
@@ -203,6 +268,9 @@ public class ForoController {
         long totalRespuestas = foroRespuestaRepository.countByPregunta_IdPregunta(pregunta.getIdPregunta());
         boolean esFavorito = foroFavoritoRepository
                 .existsByUsuario_IdUsuarioAndPregunta_IdPregunta(idUsuarioActual, pregunta.getIdPregunta());
+        long totalLikes = foroPreguntaLikeRepository.countByPregunta_IdPregunta(pregunta.getIdPregunta());
+        boolean meGusta = foroPreguntaLikeRepository
+                .existsByUsuario_IdUsuarioAndPregunta_IdPregunta(idUsuarioActual, pregunta.getIdPregunta());
 
         ForoPreguntaDTO dto = new ForoPreguntaDTO();
         dto.setIdPregunta(pregunta.getIdPregunta());
@@ -216,10 +284,17 @@ public class ForoController {
         dto.setEsFavorito(esFavorito);
         dto.setArchivoUrl(pregunta.getArchivoUrl());
         dto.setArchivoNombre(pregunta.getArchivoNombre());
+        dto.setRolUsuario(pregunta.getUsuario().getRol().name());
+        dto.setTotalLikes(totalLikes);
+        dto.setMeGusta(meGusta);
         return dto;
     }
 
-    private ForoRespuestaDTO convertirRespuestaADTO(ForoRespuesta respuesta) {
+    private ForoRespuestaDTO convertirRespuestaADTO(ForoRespuesta respuesta, Long idUsuarioActual) {
+        long totalLikes = foroRespuestaLikeRepository.countByRespuesta_IdRespuesta(respuesta.getIdRespuesta());
+        boolean meGusta = foroRespuestaLikeRepository
+                .existsByUsuario_IdUsuarioAndRespuesta_IdRespuesta(idUsuarioActual, respuesta.getIdRespuesta());
+
         ForoRespuestaDTO dto = new ForoRespuestaDTO();
         dto.setIdRespuesta(respuesta.getIdRespuesta());
         dto.setIdPregunta(respuesta.getPregunta().getIdPregunta());
@@ -230,6 +305,9 @@ public class ForoController {
         dto.setFechaCreacion(respuesta.getFechaCreacion());
         dto.setArchivoUrl(respuesta.getArchivoUrl());
         dto.setArchivoNombre(respuesta.getArchivoNombre());
+        dto.setRolUsuario(respuesta.getUsuario().getRol().name());
+        dto.setTotalLikes(totalLikes);
+        dto.setMeGusta(meGusta);
         return dto;
     }
 }

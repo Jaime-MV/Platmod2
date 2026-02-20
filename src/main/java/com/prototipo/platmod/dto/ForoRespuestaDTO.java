@@ -19,4 +19,7 @@ public class ForoRespuestaDTO {
     private LocalDateTime fechaCreacion;
     private String archivoUrl;
     private String archivoNombre;
+    private String rolUsuario;
+    private long totalLikes;
+    private boolean meGusta;
 }

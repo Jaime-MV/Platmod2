@@ -21,4 +21,7 @@ public class ForoPreguntaDTO {
     private boolean esFavorito;
     private String archivoUrl;
     private String archivoNombre;
+    private String rolUsuario;
+    private long totalLikes;
+    private boolean meGusta;
 }
