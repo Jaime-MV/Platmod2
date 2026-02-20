@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
@@ -31,6 +32,8 @@ public class AdminController {
     private AsignacionDocenteRepository asignacionRepository;
     @Autowired
     private DocenteRepository docenteRepository;
+    @Autowired
+    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     // --- GESTION DE PLANES ---
 
@@ -65,6 +68,16 @@ public class AdminController {
     public ResponseEntity<?> eliminarBeneficio(@PathVariable Long idBeneficio) {
         planService.eliminarBeneficio(idBeneficio);
         return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/planes/{id}")
+    public ResponseEntity<?> eliminarPlan(@PathVariable Long id) {
+        try {
+            planService.eliminar(id);
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     // --- GESTION DE CURSOS ---
@@ -217,6 +230,116 @@ public class AdminController {
             asignacion.setUsuario(docente);
             asignacionRepository.save(asignacion);
         }
+
+        return ResponseEntity.ok().build();
+    }
+
+    // --- GESTION DE DOCENTES (CRUD) ---
+
+    @PostMapping("/docentes")
+    public ResponseEntity<?> crearDocente(@RequestBody Map<String, String> body) {
+        String nombre = body.get("nombre");
+        String correo = body.get("correo");
+        String contrasena = body.get("contrasena");
+        String especialidad = body.getOrDefault("especialidad", null);
+
+        if (nombre == null || correo == null || contrasena == null) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "nombre, correo y contrasena son obligatorios"));
+        }
+
+        // Check if email already exists
+        if (usuarioRepository.findByCorreo(correo).isPresent()) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Ya existe un usuario con ese correo"));
+        }
+
+        // Create Usuario with DOCENTE role
+        Usuario usuario = new Usuario();
+        usuario.setNombre(nombre);
+        usuario.setCorreo(correo);
+        usuario.setContrasena(passwordEncoder.encode(contrasena));
+        usuario.setRol(Usuario.Rol.DOCENTE);
+        usuario.setEstado(true);
+        Usuario savedUsuario = usuarioRepository.save(usuario);
+
+        // Create Docente record
+        Docente docente = new Docente();
+        docente.setUsuario(savedUsuario);
+        docente.setEspecialidad(especialidad);
+        docente.setEstadoDocente(true);
+        Docente savedDocente = docenteRepository.save(docente);
+
+        return ResponseEntity.ok(Map.of(
+                "idDocente", savedDocente.getIdDocente(),
+                "idUsuario", savedUsuario.getIdUsuario(),
+                "nombre", savedUsuario.getNombre(),
+                "correo", savedUsuario.getCorreo(),
+                "especialidad", savedDocente.getEspecialidad() != null ? savedDocente.getEspecialidad() : ""));
+    }
+
+    @PutMapping("/docentes/{idDocente}")
+    public ResponseEntity<?> editarDocente(@PathVariable Long idDocente, @RequestBody Map<String, String> body) {
+        Docente docente = docenteRepository.findById(idDocente)
+                .orElse(null);
+        if (docente == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Usuario usuario = docente.getUsuario();
+
+        if (body.containsKey("nombre")) {
+            usuario.setNombre(body.get("nombre"));
+        }
+        if (body.containsKey("correo")) {
+            // Check uniqueness if correo is changing
+            String nuevoCorreo = body.get("correo");
+            if (!nuevoCorreo.equals(usuario.getCorreo()) && usuarioRepository.findByCorreo(nuevoCorreo).isPresent()) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Ya existe un usuario con ese correo"));
+            }
+            usuario.setCorreo(nuevoCorreo);
+        }
+        if (body.containsKey("contrasena") && !body.get("contrasena").isEmpty()) {
+            usuario.setContrasena(passwordEncoder.encode(body.get("contrasena")));
+        }
+        if (body.containsKey("especialidad")) {
+            docente.setEspecialidad(body.get("especialidad"));
+        }
+        if (body.containsKey("estadoDocente")) {
+            docente.setEstadoDocente(Boolean.parseBoolean(body.get("estadoDocente")));
+        }
+
+        usuarioRepository.save(usuario);
+        docenteRepository.save(docente);
+
+        return ResponseEntity.ok(Map.of(
+                "idDocente", docente.getIdDocente(),
+                "idUsuario", usuario.getIdUsuario(),
+                "nombre", usuario.getNombre(),
+                "correo", usuario.getCorreo(),
+                "especialidad", docente.getEspecialidad() != null ? docente.getEspecialidad() : "",
+                "estadoDocente", docente.getEstadoDocente()));
+    }
+
+    @DeleteMapping("/docentes/{idDocente}")
+    public ResponseEntity<?> eliminarDocente(@PathVariable Long idDocente) {
+        Docente docente = docenteRepository.findById(idDocente)
+                .orElse(null);
+        if (docente == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        // Remove course assignments first
+        asignacionRepository.deleteByUsuario_IdUsuario(docente.getUsuario().getIdUsuario());
+
+        // Delete docente record
+        docenteRepository.delete(docente);
+
+        // Disable user account (soft delete)
+        Usuario usuario = docente.getUsuario();
+        usuario.setEstado(false);
+        usuarioRepository.save(usuario);
 
         return ResponseEntity.ok().build();
     }

@@ -171,6 +171,20 @@ public class ForoController {
         return ResponseEntity.ok().build();
     }
 
+    @DeleteMapping("/respuestas/{id}")
+    public ResponseEntity<?> eliminarRespuesta(@PathVariable Long id, Authentication authentication) {
+        Usuario usuario = getUsuario(authentication);
+        ForoRespuesta respuesta = foroRespuestaService.obtenerPorId(id);
+
+        if (!respuesta.getUsuario().getIdUsuario().equals(usuario.getIdUsuario())) {
+            return ResponseEntity.status(403)
+                    .body(java.util.Map.of("error", "No puedes eliminar una respuesta que no es tuya"));
+        }
+
+        foroRespuestaService.eliminar(id);
+        return ResponseEntity.noContent().build();
+    }
+
     // ============ HELPERS ============
 
     private Usuario getUsuario(Authentication authentication) {
