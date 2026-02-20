@@ -21,12 +21,6 @@ interface SuscripcionRepository extends JpaRepository<Suscripcion, Long> {
     List<Suscripcion> findByEstado(Boolean estado);
 }
 
-// Modulo Repository
-@Repository
-interface ModuloRepository extends JpaRepository<Modulo, Long> {
-    List<Modulo> findByLeccionOrderByOrdenAsc(Leccion leccion);
-}
-
 // ProgresoEstudiante Repository
 @Repository
 interface ProgresoEstudianteRepository extends JpaRepository<ProgresoEstudiante, Long> {

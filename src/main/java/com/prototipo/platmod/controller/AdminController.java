@@ -236,6 +236,22 @@ public class AdminController {
 
     // --- GESTION DE DOCENTES (CRUD) ---
 
+    @GetMapping("/docentes")
+    public ResponseEntity<List<Map<String, Object>>> listarDocentesCompleto() {
+        List<Docente> docentes = docenteRepository.findAll();
+        List<Map<String, Object>> result = docentes.stream().map(d -> {
+            java.util.HashMap<String, Object> map = new java.util.HashMap<>();
+            map.put("idDocente", d.getIdDocente());
+            map.put("idUsuario", d.getUsuario().getIdUsuario());
+            map.put("nombre", d.getUsuario().getNombre());
+            map.put("correo", d.getUsuario().getCorreo());
+            map.put("especialidad", d.getEspecialidad() != null ? d.getEspecialidad() : "");
+            map.put("estadoDocente", d.getEstadoDocente());
+            return (Map<String, Object>) map;
+        }).collect(Collectors.toList());
+        return ResponseEntity.ok(result);
+    }
+
     @PostMapping("/docentes")
     public ResponseEntity<?> crearDocente(@RequestBody Map<String, String> body) {
         String nombre = body.get("nombre");
