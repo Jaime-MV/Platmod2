@@ -158,6 +158,8 @@ public class ForoController {
         respuesta.setPregunta(pregunta);
         respuesta.setUsuario(usuario);
         respuesta.setContenido(body.get("contenido"));
+        respuesta.setArchivoUrl(body.getOrDefault("archivoUrl", null));
+        respuesta.setArchivoNombre(body.getOrDefault("archivoNombre", null));
 
         ForoRespuesta creada = foroRespuestaService.crear(respuesta);
         return ResponseEntity.ok(convertirRespuestaADTO(creada));
@@ -204,13 +206,16 @@ public class ForoController {
     }
 
     private ForoRespuestaDTO convertirRespuestaADTO(ForoRespuesta respuesta) {
-        return new ForoRespuestaDTO(
-                respuesta.getIdRespuesta(),
-                respuesta.getPregunta().getIdPregunta(),
-                respuesta.getUsuario().getIdUsuario(),
-                respuesta.getUsuario().getNombre(),
-                respuesta.getContenido(),
-                respuesta.getEsVerificada(),
-                respuesta.getFechaCreacion());
+        ForoRespuestaDTO dto = new ForoRespuestaDTO();
+        dto.setIdRespuesta(respuesta.getIdRespuesta());
+        dto.setIdPregunta(respuesta.getPregunta().getIdPregunta());
+        dto.setIdUsuario(respuesta.getUsuario().getIdUsuario());
+        dto.setNombreUsuario(respuesta.getUsuario().getNombre());
+        dto.setContenido(respuesta.getContenido());
+        dto.setEsVerificada(respuesta.getEsVerificada());
+        dto.setFechaCreacion(respuesta.getFechaCreacion());
+        dto.setArchivoUrl(respuesta.getArchivoUrl());
+        dto.setArchivoNombre(respuesta.getArchivoNombre());
+        return dto;
     }
 }

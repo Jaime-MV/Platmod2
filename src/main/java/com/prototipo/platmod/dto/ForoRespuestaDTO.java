@@ -17,4 +17,6 @@ public class ForoRespuestaDTO {
     private String contenido;
     private Boolean esVerificada;
     private LocalDateTime fechaCreacion;
+    private String archivoUrl;
+    private String archivoNombre;
 }
