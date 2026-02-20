@@ -65,6 +65,8 @@ public class ForoController {
         pregunta.setTitulo(body.get("titulo"));
         pregunta.setContenido(body.get("contenido"));
         pregunta.setCategoria(body.getOrDefault("categoria", "General"));
+        pregunta.setArchivoUrl(body.getOrDefault("archivoUrl", null));
+        pregunta.setArchivoNombre(body.getOrDefault("archivoNombre", null));
 
         ForoPregunta creada = foroPreguntaService.crear(pregunta);
         return ResponseEntity.ok(convertirPreguntaADTO(creada, usuario.getIdUsuario()));
@@ -196,6 +198,8 @@ public class ForoController {
         dto.setFechaCreacion(pregunta.getFechaCreacion());
         dto.setTotalRespuestas(totalRespuestas);
         dto.setEsFavorito(esFavorito);
+        dto.setArchivoUrl(pregunta.getArchivoUrl());
+        dto.setArchivoNombre(pregunta.getArchivoNombre());
         return dto;
     }
 

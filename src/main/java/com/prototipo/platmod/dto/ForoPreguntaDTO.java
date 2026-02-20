@@ -19,4 +19,6 @@ public class ForoPreguntaDTO {
     private LocalDateTime fechaCreacion;
     private long totalRespuestas;
     private boolean esFavorito;
+    private String archivoUrl;
+    private String archivoNombre;
 }
