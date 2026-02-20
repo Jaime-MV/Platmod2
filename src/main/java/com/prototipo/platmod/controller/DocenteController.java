@@ -187,7 +187,7 @@ public class DocenteController {
                 "idModulo", m.getIdModulo(),
                 "idLeccion", m.getLeccion().getIdLeccion(),
                 "tituloSeccion", m.getTituloSeccion(),
-                "tipoContenido", m.getTipoContenido() != null ? m.getTipoContenido() : "",
+                "descripcion", m.getDescripcion() != null ? m.getDescripcion() : "",
                 "urlRecurso", m.getUrlRecurso() != null ? m.getUrlRecurso() : "",
                 "orden", m.getOrden())).collect(Collectors.toList());
 
@@ -211,7 +211,7 @@ public class DocenteController {
         Modulo modulo = new Modulo();
         modulo.setLeccion(leccion);
         modulo.setTituloSeccion(body.get("tituloSeccion"));
-        modulo.setTipoContenido(body.getOrDefault("tipoContenido", null));
+        modulo.setDescripcion(body.getOrDefault("descripcion", null));
         modulo.setUrlRecurso(body.getOrDefault("urlRecurso", null));
 
         // Auto-calculate order if not provided
@@ -231,7 +231,7 @@ public class DocenteController {
                 "idModulo", creado.getIdModulo(),
                 "idLeccion", leccion.getIdLeccion(),
                 "tituloSeccion", creado.getTituloSeccion(),
-                "tipoContenido", creado.getTipoContenido() != null ? creado.getTipoContenido() : "",
+                "descripcion", creado.getDescripcion() != null ? creado.getDescripcion() : "",
                 "urlRecurso", creado.getUrlRecurso() != null ? creado.getUrlRecurso() : "",
                 "orden", creado.getOrden()));
     }
@@ -254,8 +254,8 @@ public class DocenteController {
         if (body.containsKey("tituloSeccion")) {
             modulo.setTituloSeccion(body.get("tituloSeccion"));
         }
-        if (body.containsKey("tipoContenido")) {
-            modulo.setTipoContenido(body.get("tipoContenido"));
+        if (body.containsKey("descripcion")) {
+            modulo.setDescripcion(body.get("descripcion"));
         }
         if (body.containsKey("urlRecurso")) {
             modulo.setUrlRecurso(body.get("urlRecurso"));
@@ -270,7 +270,7 @@ public class DocenteController {
                 "idModulo", actualizado.getIdModulo(),
                 "idLeccion", actualizado.getLeccion().getIdLeccion(),
                 "tituloSeccion", actualizado.getTituloSeccion(),
-                "tipoContenido", actualizado.getTipoContenido() != null ? actualizado.getTipoContenido() : "",
+                "descripcion", actualizado.getDescripcion() != null ? actualizado.getDescripcion() : "",
                 "urlRecurso", actualizado.getUrlRecurso() != null ? actualizado.getUrlRecurso() : "",
                 "orden", actualizado.getOrden()));
     }
