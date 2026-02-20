@@ -29,8 +29,11 @@ public class Modulo {
     @Column(name = "descripcion", columnDefinition = "TEXT")
     private String descripcion;
 
-    @Column(name = "url_recurso", length = 500)
-    private String urlRecurso;
+    @Column(name = "portada_url", length = 1000)
+    private String portadaUrl;
+
+    @Column(name = "recursos", columnDefinition = "TEXT")
+    private String recursos;
 
     @NotNull(message = "El orden es obligatorio")
     @Column(nullable = false)

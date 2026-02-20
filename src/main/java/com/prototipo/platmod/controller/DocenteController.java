@@ -188,7 +188,8 @@ public class DocenteController {
                 "idLeccion", m.getLeccion().getIdLeccion(),
                 "tituloSeccion", m.getTituloSeccion(),
                 "descripcion", m.getDescripcion() != null ? m.getDescripcion() : "",
-                "urlRecurso", m.getUrlRecurso() != null ? m.getUrlRecurso() : "",
+                "portadaUrl", m.getPortadaUrl() != null ? m.getPortadaUrl() : "",
+                "recursos", m.getRecursos() != null ? m.getRecursos() : "[]",
                 "orden", m.getOrden())).collect(Collectors.toList());
 
         return ResponseEntity.ok(result);
@@ -212,7 +213,8 @@ public class DocenteController {
         modulo.setLeccion(leccion);
         modulo.setTituloSeccion(body.get("tituloSeccion"));
         modulo.setDescripcion(body.getOrDefault("descripcion", null));
-        modulo.setUrlRecurso(body.getOrDefault("urlRecurso", null));
+        modulo.setPortadaUrl(body.getOrDefault("portadaUrl", null));
+        modulo.setRecursos(body.getOrDefault("recursos", null));
 
         // Auto-calculate order if not provided
         int orden;
@@ -232,7 +234,8 @@ public class DocenteController {
                 "idLeccion", leccion.getIdLeccion(),
                 "tituloSeccion", creado.getTituloSeccion(),
                 "descripcion", creado.getDescripcion() != null ? creado.getDescripcion() : "",
-                "urlRecurso", creado.getUrlRecurso() != null ? creado.getUrlRecurso() : "",
+                "portadaUrl", creado.getPortadaUrl() != null ? creado.getPortadaUrl() : "",
+                "recursos", creado.getRecursos() != null ? creado.getRecursos() : "[]",
                 "orden", creado.getOrden()));
     }
 
@@ -257,8 +260,11 @@ public class DocenteController {
         if (body.containsKey("descripcion")) {
             modulo.setDescripcion(body.get("descripcion"));
         }
-        if (body.containsKey("urlRecurso")) {
-            modulo.setUrlRecurso(body.get("urlRecurso"));
+        if (body.containsKey("portadaUrl")) {
+            modulo.setPortadaUrl(body.get("portadaUrl"));
+        }
+        if (body.containsKey("recursos")) {
+            modulo.setRecursos(body.get("recursos"));
         }
         if (body.containsKey("orden")) {
             modulo.setOrden(Integer.parseInt(body.get("orden")));
@@ -271,7 +277,8 @@ public class DocenteController {
                 "idLeccion", actualizado.getLeccion().getIdLeccion(),
                 "tituloSeccion", actualizado.getTituloSeccion(),
                 "descripcion", actualizado.getDescripcion() != null ? actualizado.getDescripcion() : "",
-                "urlRecurso", actualizado.getUrlRecurso() != null ? actualizado.getUrlRecurso() : "",
+                "portadaUrl", actualizado.getPortadaUrl() != null ? actualizado.getPortadaUrl() : "",
+                "recursos", actualizado.getRecursos() != null ? actualizado.getRecursos() : "[]",
                 "orden", actualizado.getOrden()));
     }
 
