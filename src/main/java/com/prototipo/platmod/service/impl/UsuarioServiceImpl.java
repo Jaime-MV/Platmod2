@@ -1,4 +1,5 @@
 package com.prototipo.platmod.service.impl;
+
 import com.prototipo.platmod.entity.Usuario;
 import com.prototipo.platmod.repository.UsuarioRepository;
 import com.prototipo.platmod.service.UsuarioService;
@@ -50,6 +51,9 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     @Override
     public Usuario crear(Usuario usuario) {
+        // Normalizar correo: minúsculas y sin espacios
+        usuario.setCorreo(usuario.getCorreo().toLowerCase().trim());
+
         if (usuarioRepository.existsByCorreo(usuario.getCorreo())) {
             throw new RuntimeException("El correo ya esta registrado: " + usuario.getCorreo());
         }
@@ -61,7 +65,8 @@ public class UsuarioServiceImpl implements UsuarioService {
         // Esto ignora cualquier dato de "rol" que venga en el JSON
         usuario.setRol(Usuario.Rol.ESTUDIANTE);
 
-        // 3. ASEGURAR QUE EL USUARIO NAZCA ACTIVO (O false si requieres verificación por correo)
+        // 3. ASEGURAR QUE EL USUARIO NAZCA ACTIVO (O false si requieres verificación
+        // por correo)
         usuario.setEstado(true);
 
         return usuarioRepository.save(usuario);

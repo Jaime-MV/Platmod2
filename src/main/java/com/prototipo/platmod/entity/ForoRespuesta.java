@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "foro_respuestas")
 @Data
@@ -31,4 +33,18 @@ public class ForoRespuesta {
 
     @Column(name = "es_verificada", nullable = false)
     private Boolean esVerificada = false;
+
+    @Column(name = "archivo_url", length = 500)
+    private String archivoUrl;
+
+    @Column(name = "archivo_nombre", length = 255)
+    private String archivoNombre;
+
+    @Column(name = "fecha_creacion", nullable = false, updatable = false)
+    private LocalDateTime fechaCreacion;
+
+    @PrePersist
+    protected void onCreate() {
+        fechaCreacion = LocalDateTime.now();
+    }
 }

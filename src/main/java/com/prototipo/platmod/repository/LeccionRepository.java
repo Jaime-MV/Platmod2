@@ -13,5 +13,7 @@ import java.util.List;
 public interface LeccionRepository extends JpaRepository<Leccion, Long> {
     List<Leccion> findByCurso(Curso curso);
 
+    List<Leccion> findByCurso_IdCurso(Long idCurso);
+
     List<Leccion> findByDocente(Docente docente);
 }

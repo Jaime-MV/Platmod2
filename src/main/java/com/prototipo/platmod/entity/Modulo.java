@@ -1,4 +1,5 @@
 package com.prototipo.platmod.entity;
+
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -25,11 +26,14 @@ public class Modulo {
     @Column(name = "titulo_seccion", nullable = false, length = 200)
     private String tituloSeccion;
 
-    @Column(name = "tipo_contenido", length = 50)
-    private String tipoContenido;
+    @Column(name = "descripcion", columnDefinition = "TEXT")
+    private String descripcion;
 
-    @Column(name = "url_recurso", length = 255)
-    private String urlRecurso;
+    @Column(name = "portada_url", length = 1000)
+    private String portadaUrl;
+
+    @Column(name = "recursos", columnDefinition = "TEXT")
+    private String recursos;
 
     @NotNull(message = "El orden es obligatorio")
     @Column(nullable = false)
